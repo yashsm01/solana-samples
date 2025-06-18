@@ -1,29 +1,33 @@
 import * as anchor from "@coral-xyz/anchor";
-import { BN, Program } from "@coral-xyz/anchor";
-import { Cpi } from "../target/types/cpi";
-import { SystemProgram } from "@solana/web3.js";
+import { Program } from "@coral-xyz/anchor";
+import { TokenExample } from "../target/types/token_example";
+import { TOKEN_2022_PROGRAM_ID, getMint } from "@solana/spl-token";
 
-describe("mint-token", () => {
+describe("token-example", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.cpi as Program<Cpi>;
-  const transferAmount = 1000000000;
-  const sender = anchor.web3.Keypair.generate();
-  const recipient = anchor.web3.Keypair.generate();
+  const program = anchor.workspace.TokenExample as Program<TokenExample>;
+  const [mint, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("mint")],
+    program.programId,
+  );
 
-  it("SOL Transfer Anchor", async () => {
-    const provider = anchor.getProvider();
-    const sig = await provider.connection.requestAirdrop(sender.publicKey, 2 * transferAmount);
-    await provider.connection.confirmTransaction(sig);
-
+  it("Is initialized!", async () => {
     const tx = await program.methods
-      .solTransfer(new BN(transferAmount))
+      .createMint()
       .accounts({
-        sender: sender.publicKey,
-        recipient: recipient.publicKey
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
       })
-      .signers([sender])
-      .rpc();
-      console.log(`\nTransaction Signature:` + `https://solana.fm/tx/${tx}?cluster=devnet-solana`);
+      .rpc({ commitment: "confirmed" });
+    console.log("Your transaction signature", tx);
+
+    const mintAccount = await getMint(
+      program.provider.connection,
+      mint,
+      "confirmed",
+      TOKEN_2022_PROGRAM_ID,
+    );
+
+    console.log("Mint Account", mintAccount);
   });
 });
