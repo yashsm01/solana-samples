@@ -1,29 +1,107 @@
 import * as anchor from "@coral-xyz/anchor";
-import { BN, Program } from "@coral-xyz/anchor";
-import { Cpi } from "../target/types/cpi";
-import { SystemProgram } from "@solana/web3.js";
+import { Program } from "@coral-xyz/anchor";
+import { TokenExample } from "../target/types/token_example";
+import {
+  TOKEN_2022_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  getMint,
+  getAccount,
+} from "@solana/spl-token";
 
-describe("mint-token", () => {
+describe("token-example", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.cpi as Program<Cpi>;
-  const transferAmount = 1000000000;
-  const sender = anchor.web3.Keypair.generate();
-  const recipient = anchor.web3.Keypair.generate();
+  const program = anchor.workspace.TokenExample as Program<TokenExample>;
+  const [mint, mintBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("mint")],
+    program.programId,
+  );
 
-  it("SOL Transfer Anchor", async () => {
-    const provider = anchor.getProvider();
-    const sig = await provider.connection.requestAirdrop(sender.publicKey, 2 * transferAmount);
-    await provider.connection.confirmTransaction(sig);
+  const [token, tokenBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("token")],
+    program.programId,
+  );
 
-    const tx = await program.methods
-      .solTransfer(new BN(transferAmount))
-      .accounts({
-        sender: sender.publicKey,
-        recipient: recipient.publicKey
-      })
-      .signers([sender])
-      .rpc();
-      console.log(`\nTransaction Signature:` + `https://solana.fm/tx/${tx}?cluster=devnet-solana`);
+  it("Is initialized!", async () => {
+    try {
+      // Check if mint already exists
+      let mintAccount;
+      try {
+        mintAccount = await getMint(
+          program.provider.connection,
+          mint,
+          "confirmed",
+          TOKEN_2022_PROGRAM_ID,
+        );
+        console.log("Mint already exists:", mintAccount);
+        return; // Skip creation if already exists
+      } catch (error) {
+        // Mint doesn't exist, proceed with creation
+        console.log("Mint doesn't exist, creating new one...");
+      }
+
+      const tx = await program.methods
+        .createMint()
+        .accounts({
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc({ commitment: "confirmed", skipPreflight: true });
+
+      console.log("Your transaction signature", tx);
+
+      mintAccount = await getMint(
+        program.provider.connection,
+        mint,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID,
+      );
+
+      console.log("Mint Account", mintAccount);
+    } catch (error) {
+      console.error("Error in mint creation:", error);
+      throw error;
+    }
+  });
+
+  it("Create token account", async () => {
+    try {
+      // Check if token account already exists
+      let tokenAccount;
+      try {
+        tokenAccount = await getAccount(
+          program.provider.connection,
+          token,
+          "confirmed",
+          TOKEN_2022_PROGRAM_ID,
+        );
+        console.log("Token account already exists:", tokenAccount);
+        return; // Skip creation if already exists
+      } catch (error) {
+        // Token account doesn't exist, proceed with creation
+        console.log("Token account doesn't exist, creating new one...");
+      }
+
+      const tx = await program.methods
+        .createTokenAccount()
+        .accounts({
+          mint: mint,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc({ commitment: "confirmed", skipPreflight: true });
+
+      console.log("Your transaction signature", tx);
+
+      tokenAccount = await getAccount(
+        program.provider.connection,
+        token,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID,
+      );
+
+      console.log("Token Account", tokenAccount);
+    } catch (error) {
+      console.error("Error in token account creation:", error);
+      throw error;
+    }
   });
 });
