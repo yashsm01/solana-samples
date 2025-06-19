@@ -23,85 +23,48 @@ describe("token-example", () => {
   );
 
   it("Is initialized!", async () => {
-    try {
-      // Check if mint already exists
-      let mintAccount;
-      try {
-        mintAccount = await getMint(
-          program.provider.connection,
-          mint,
-          "confirmed",
-          TOKEN_2022_PROGRAM_ID,
-        );
-        console.log("Mint already exists:", mintAccount);
-        return; // Skip creation if already exists
-      } catch (error) {
-        // Mint doesn't exist, proceed with creation
-        console.log("Mint doesn't exist, creating new one...");
-      }
+    const tx = await program.methods
+      .createMint()
+      .accounts({
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .rpc({ commitment: "confirmed" });
+    console.log("Your transaction signature", tx);
 
-      const tx = await program.methods
-        .createMint()
-        .accounts({
-          tokenProgram: TOKEN_2022_PROGRAM_ID,
-        })
-        .rpc({ commitment: "confirmed", skipPreflight: true });
+    const mintAccount = await getMint(
+      program.provider.connection,
+      mint,
+      "confirmed",
+      TOKEN_2022_PROGRAM_ID,
+    );
 
-      console.log("Your transaction signature", tx);
-
-      mintAccount = await getMint(
-        program.provider.connection,
-        mint,
-        "confirmed",
-        TOKEN_2022_PROGRAM_ID,
-      );
-
-      console.log("Mint Account", mintAccount);
-    } catch (error) {
-      console.error("Error in mint creation:", error);
-      throw error;
-    }
+    console.log("Mint Account", mintAccount);
   });
 
-  it("Create token account", async () => {
-    try {
-      // Check if token account already exists
-      let tokenAccount;
-      try {
-        tokenAccount = await getAccount(
-          program.provider.connection,
-          token,
-          "confirmed",
-          TOKEN_2022_PROGRAM_ID,
-        );
-        console.log("Token account already exists:", tokenAccount);
-        return; // Skip creation if already exists
-      } catch (error) {
-        // Token account doesn't exist, proceed with creation
-        console.log("Token account doesn't exist, creating new one...");
-      }
+  it("Mint Tokens", async () => {
+    const tx = await program.methods
+      .mintTokens(new anchor.BN(100))
+      .accounts({
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .rpc({ commitment: "confirmed" });
 
-      const tx = await program.methods
-        .createTokenAccount()
-        .accounts({
-          mint: mint,
-          tokenProgram: TOKEN_2022_PROGRAM_ID,
-        })
-        .rpc({ commitment: "confirmed", skipPreflight: true });
+    console.log("Your transaction signature", tx);
 
-      console.log("Your transaction signature", tx);
+    const associatedTokenAccount = await getAssociatedTokenAddress(
+      mint,
+      program.provider.publicKey,
+      false,
+      TOKEN_2022_PROGRAM_ID,
+    );
 
-      tokenAccount = await getAccount(
-        program.provider.connection,
-        token,
-        "confirmed",
-        TOKEN_2022_PROGRAM_ID,
-      );
+    const tokenAccount = await getAccount(
+      program.provider.connection,
+      associatedTokenAccount,
+      "confirmed",
+      TOKEN_2022_PROGRAM_ID,
+    );
 
-      console.log("Token Account", tokenAccount);
-    } catch (error) {
-      console.error("Error in token account creation:", error);
-      throw error;
-    }
+    console.log("Token Account", tokenAccount);
   });
 });
