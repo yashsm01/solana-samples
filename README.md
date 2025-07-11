@@ -1,3 +1,56 @@
+## 🛠️ Solana Development Utilities
+
+## 📦 Anchor Installation
+
+To install Anchor CLI and set up your development environment, follow the official Anchor installation guide:
+
+🔗 [Anchor Installation Docs](https://www.anchor-lang.com/docs/installation)
+
+```sh
+
+### ▶️ Solana Playground
+
+Use the Solana Playground to deploy and interact with your smart contract:
+🔗 [Solana Playground (solpg.io)](https://beta.solpg.io/)
+
+---
+
+### 💧 Airdrop Test SOL
+
+Get free SOL on testnet:
+🔗 [Solana Faucet](https://faucet.solana.com/)
+
+Use the following command to request 1 SOL from the faucet:
+
+```sh
+solana airdrop 1 8vNFrvPuB46CXQyQ8VLUoA2D9yvHQo7NNaTesw4YA8A3 --url https://api.testnet.solana.com
+```
+
+---
+
+### 🔑 Example Solana Account
+
+```sh
+Public Key: 8vNFrvPuB46CXQyQ8VLUoA2D9yvHQo7NNaTesw4YA8A3
+Network:    https://api.testnet.solana.com
+```
+
+---
+
+### 🧪 Common Anchor CLI Commands
+
+```sh
+# Build Anchor program
+anchor build
+
+# Start a local test validator with fresh state
+solana-test-validator --reset
+
+# Run Anchor tests (skip local validator if one is already running)
+anchor test --skip-local-validator
+```
+
+
 ## ⚙️ Anchor Program (Rust)
 
 ```rust
